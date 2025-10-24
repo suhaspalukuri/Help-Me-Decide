@@ -85,8 +85,7 @@ export const loginUser = async (email: string, password: string): Promise<{ succ
     }
 
     if (authData.user) {
-        // After successful login, check if a public profile exists. This prevents users
-        // from getting stuck if their profile creation failed during signup.
+        // After successful login, check if a public profile exists.
         const { error: profileError } = await supabase
             .from('users')
             .select('id')
@@ -94,16 +93,27 @@ export const loginUser = async (email: string, password: string): Promise<{ succ
             .single();
 
         if (profileError) {
-            // If the profile is missing (PGRST116: No rows found), log the user out
-            // and return a specific error message.
+            // If the profile is missing (PGRST116: No rows found), create a basic one.
             if (profileError.code === 'PGRST116') {
+                console.warn(`Profile for user ${authData.user.id} not found in 'users' table after login. Creating a default profile.`);
+                const { error: createProfileError } = await supabase.from('users').insert({
+                    id: authData.user.id,
+                    email: authData.user.email?.toLowerCase(),
+                    name: 'New User', // Default name
+                    securityQuestion: 'N/A', // Placeholder
+                    securityAnswer: 'N/A', // Placeholder
+                });
+                if (createProfileError) {
+                    console.error("Error creating default user profile after login:", createProfileError.message);
+                    await supabase.auth.signOut(); // Log out if default profile creation fails
+                    return { success: false, error: "An error occurred setting up your profile. Please try again or sign up." };
+                }
+            } else {
+                // For any other database error, log out and show a generic error.
                 await supabase.auth.signOut();
-                return { success: false, error: "Your account profile is missing. Please sign up again to create it." };
+                console.error("Profile check error after login:", profileError.message);
+                return { success: false, error: "An error occurred while checking your profile." };
             }
-            // For any other database error, log out and show a generic error.
-            await supabase.auth.signOut();
-            console.error("Profile check error after login:", profileError.message);
-            return { success: false, error: "An error occurred while checking your profile." };
         }
     } else {
         // This case should not be hit if authError is null, but it's a useful safeguard.
