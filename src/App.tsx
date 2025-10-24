@@ -20,34 +20,35 @@ function App() {
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const syncDataForUser = async (email: string) => {
+  const syncData = async () => {
     setIsLoading(true);
-    const [fetchedBoards, allUsers] = await Promise.all([db.getBoards(), db.getUsers()]);
-    const currentUser = allUsers.find(u => u.email === email);
-    
+    const [currentUser, fetchedBoards, allUsers] = await Promise.all([
+      db.getCurrentUserProfile(),
+      db.getBoards(),
+      db.getUsers(),
+    ]);
+
     setBoards(fetchedBoards);
     setUsers(allUsers);
-    setCurrentUserEmail(email);
-    setCurrentUserName(currentUser?.name || null);
+    
+    if (currentUser) {
+      setCurrentUserEmail(currentUser.email);
+      setCurrentUserName(currentUser.name);
+    } else {
+      setCurrentUserEmail(null);
+      setCurrentUserName(null);
+    }
     setIsLoading(false);
-  }
+  };
 
   useEffect(() => {
-    const initApp = async () => {
-      const email = await db.getCurrentUser();
-      if (email) {
-        await syncDataForUser(email);
-      } else {
-        setIsLoading(false);
-      }
-    };
-    initApp();
+    syncData();
   }, []);
 
   const handleLogin = async (email: string, password: string): Promise<{success: boolean, error?: string}> => {
     const { success, error } = await db.loginUser(email, password);
     if (success) {
-      await syncDataForUser(email);
+      await syncData();
     }
     return { success, error };
   };
@@ -55,17 +56,14 @@ function App() {
   const handleSignup = async (userData: Omit<User, 'password'> & {password: string}): Promise<{success: boolean, error?: string}> => {
     const { success, error } = await db.signupUser(userData as User);
     if (success) {
-       await syncDataForUser(userData.email);
+       await syncData();
     }
     return { success, error };
   }
 
   const handleLogout = async () => {
     await db.logoutUser();
-    setCurrentUserEmail(null);
-    setCurrentUserName(null);
-    setBoards([]);
-    setUsers([]);
+    await syncData();
     setView('dashboard');
     setSelectedBoardId(null);
   };

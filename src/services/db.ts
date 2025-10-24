@@ -21,6 +21,30 @@ export const getCurrentUser = async (): Promise<string | null> => {
 
 // --- User Data Management ---
 
+export const getCurrentUserProfile = async (): Promise<User | null> => {
+    if (!supabase) return null;
+    
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) {
+        return null;
+    }
+
+    const { data: userProfile, error } = await supabase.from('users')
+        .select('id, name, email')
+        .eq('id', authUser.id)
+        .single();
+
+    if (error) {
+        // It's okay if no profile is found, but log other errors.
+        if (error.code !== 'PGRST116') {
+             console.error("Error fetching current user profile:", error.message);
+        }
+        return null;
+    }
+    
+    return userProfile;
+};
+
 export const getUsers = async (): Promise<User[]> => {
     if (!supabase) return [];
     const { data, error } = await supabase.from('users').select('id, name, email, securityQuestion, securityAnswer');
