@@ -73,14 +73,42 @@ const getUserByEmail = async (email: string): Promise<User | null> => {
 
 export const loginUser = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     if (!supabase) return NOT_CONFIGURED_ERROR;
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
+
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
     });
 
-    if (error) {
+    if (authError) {
         return { success: false, error: "Hmm, that email or password doesn't look right." };
     }
+
+    if (authData.user) {
+        // After successful login, check if a public profile exists. This prevents users
+        // from getting stuck if their profile creation failed during signup.
+        const { error: profileError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', authData.user.id)
+            .single();
+
+        if (profileError) {
+            // If the profile is missing (PGRST116: No rows found), log the user out
+            // and return a specific error message.
+            if (profileError.code === 'PGRST116') {
+                await supabase.auth.signOut();
+                return { success: false, error: "Your account profile is missing. Please sign up again to create it." };
+            }
+            // For any other database error, log out and show a generic error.
+            await supabase.auth.signOut();
+            console.error("Profile check error after login:", profileError.message);
+            return { success: false, error: "An error occurred while checking your profile." };
+        }
+    } else {
+        // This case should not be hit if authError is null, but it's a useful safeguard.
+        return { success: false, error: "Could not retrieve user details after login." };
+    }
+
     return { success: true };
 };
 
