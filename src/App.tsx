@@ -7,6 +7,7 @@ import { Auth } from './components/Auth';
 import { Explore } from './components/Explore';
 import { Layout } from './components/Layout';
 import * as db from './services/db';
+import { supabase } from './services/supabaseClient';
 
 type View = 'dashboard' | 'board' | 'create' | 'explore';
 
@@ -43,27 +44,32 @@ function App() {
 
   useEffect(() => {
     syncData();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncData();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogin = async (email: string, password: string): Promise<{success: boolean, error?: string}> => {
+    // The onAuthStateChange listener will handle the data sync.
     const { success, error } = await db.loginUser(email, password);
-    if (success) {
-      await syncData();
-    }
     return { success, error };
   };
 
-  const handleSignup = async (userData: Omit<User, 'password'> & {password: string}): Promise<{success: boolean, error?: string}> => {
-    const { success, error } = await db.signupUser(userData as User);
-    if (success) {
-       await syncData();
-    }
-    return { success, error };
+  const handleSignup = async (userData: Omit<User, 'password'> & {password: string}): Promise<{success: boolean; error?: string; requiresConfirmation?: boolean}> => {
+    // onAuthStateChange will fire if confirmation is disabled.
+    // Otherwise, the user needs to confirm their email and is not logged in yet.
+    const result = await db.signupUser(userData as User);
+    return result;
   }
 
   const handleLogout = async () => {
     await db.logoutUser();
-    await syncData();
+    // onAuthStateChange will handle the data sync.
     setView('dashboard');
     setSelectedBoardId(null);
   };

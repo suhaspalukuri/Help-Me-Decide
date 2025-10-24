@@ -84,7 +84,7 @@ export const loginUser = async (email: string, password: string): Promise<{ succ
     return { success: true };
 };
 
-export const signupUser = async (userData: User): Promise<{ success: boolean; error?: string }> => {
+export const signupUser = async (userData: User): Promise<{ success: boolean; error?: string; requiresConfirmation?: boolean }> => {
     if (!supabase) return NOT_CONFIGURED_ERROR;
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -113,7 +113,8 @@ export const signupUser = async (userData: User): Promise<{ success: boolean; er
         return { success: false, error: 'Could not save user profile.' };
     }
 
-    return { success: true };
+    const requiresConfirmation = authData.session === null;
+    return { success: true, requiresConfirmation };
 };
 
 export const getSecurityQuestionForEmail = async (email: string): Promise<string | null> => {

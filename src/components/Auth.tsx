@@ -7,7 +7,7 @@ type AuthView = 'login' | 'signup' | 'forgot_email' | 'forgot_question' | 'forgo
 
 interface AuthProps {
   onLogin: (email: string, password: string) => Promise<{success: boolean, error?: string}>;
-  onSignup: (userData: Omit<User, 'password'> & {password: string}) => Promise<{success: boolean, error?: string}>;
+  onSignup: (userData: Omit<User, 'password'> & {password: string}) => Promise<{success: boolean; error?: string; requiresConfirmation?: boolean}>;
 }
 
 const INPUT_CLASS = "w-full bg-white border border-zinc-300 rounded-md px-3 py-2.5 text-sm ring-offset-white focus:outline-none focus:ring-0 transition-colors";
@@ -110,6 +110,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onSignup }) => {
   const [view, setView] = useState<AuthView>('login');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmationMessage, setShowConfirmationMessage] = useState(false);
 
   // Form fields
   const [name, setName] = useState('');
@@ -146,7 +147,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onSignup }) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    const { success, error } = await onLogin(email.trim(), password);
+    const { error } = await onLogin(email.trim(), password);
     if (error) {
         setError(error);
     }
@@ -161,7 +162,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onSignup }) => {
     }
     setError('');
     setIsLoading(true);
-    const { success, error } = await onSignup({
+    const { success, error, requiresConfirmation } = await onSignup({
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password,
@@ -170,6 +171,9 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onSignup }) => {
     });
      if (error) {
         setError(error);
+    }
+    if (success && requiresConfirmation) {
+        setShowConfirmationMessage(true);
     }
     setIsLoading(false);
   };
@@ -227,6 +231,31 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onSignup }) => {
       }
       setIsLoading(false);
   };
+
+  if (showConfirmationMessage) {
+    return (
+      <div className="w-full h-screen lg:grid lg:grid-cols-2">
+        <div
+          className="hidden lg:block bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://i.pinimg.com/1200x/e2/b0/c9/e2b0c9bf17cb00736d148080e0b1da77.jpg')",
+          }}
+          role="img"
+          aria-label="A vibrant arrangement of colorful sticky notes on a wall, symbolizing decision-making and brainstorming."
+        ></div>
+        <div className="flex items-center justify-center h-full px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto grid w-[350px] gap-4 text-center">
+            <h1 className="text-3xl font-bold tracking-tight">One Last Step!</h1>
+            <p className="text-zinc-600">
+              We've sent a confirmation link to{' '}
+              <strong className="text-zinc-900">{email}</strong>. Please check your inbox (and spam folder!) to activate your account.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderLogin = () => (
     <form onSubmit={handleLoginSubmit} className="space-y-4">
