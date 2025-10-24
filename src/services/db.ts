@@ -30,7 +30,8 @@ export const getCurrentUserProfile = async (): Promise<User | null> => {
     }
 
     const { data: userProfile, error } = await supabase.from('users')
-        .select('id, name, email')
+        // Fix: Select all fields required by the User type to resolve TypeScript error.
+        .select('id, name, email, securityQuestion, securityAnswer')
         .eq('id', authUser.id)
         .single();
 

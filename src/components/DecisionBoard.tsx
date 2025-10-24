@@ -17,11 +17,22 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({ board, currentUser
   const [timeLeft, setTimeLeft] = useState(formatTimeLeft(board.expiresAt));
   
   const isExpired = board.expiresAt !== -1 && board.expiresAt < Date.now();
+  const winningOption = isExpired && board.options.length > 0
+    ? [...board.options].sort((a, b) => b.votes - a.votes)[0]
+    : null;
 
   useEffect(() => {
     if (board.expiresAt !== -1 && !isExpired) {
         const timer = setInterval(() => {
-            setTimeLeft(formatTimeLeft(board.expiresAt));
+            const newTimeLeft = formatTimeLeft(board.expiresAt);
+            if (newTimeLeft === "Closed") {
+                // To force a re-render and show summary button etc.
+                setTimeLeft(newTimeLeft);
+                clearInterval(timer); 
+                window.location.reload(); // Simple way to refresh board state
+            } else {
+                setTimeLeft(newTimeLeft);
+            }
         }, 1000);
         return () => clearInterval(timer);
     }
@@ -117,6 +128,7 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({ board, currentUser
             onUpdateContributionVote={handleUpdateContributionVote}
             hasVoted={!!votedOptionId}
             isExpired={isExpired}
+            isWinner={winningOption ? option.id === winningOption.id : false}
           />
         ))}
       </div>

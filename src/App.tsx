@@ -23,23 +23,29 @@ function App() {
 
   const syncData = async () => {
     setIsLoading(true);
-    const [currentUser, fetchedBoards, allUsers] = await Promise.all([
-      db.getCurrentUserProfile(),
-      db.getBoards(),
-      db.getUsers(),
-    ]);
+    try {
+      const [currentUser, fetchedBoards, allUsers] = await Promise.all([
+        db.getCurrentUserProfile(),
+        db.getBoards(),
+        db.getUsers(),
+      ]);
 
-    setBoards(fetchedBoards);
-    setUsers(allUsers);
-    
-    if (currentUser) {
-      setCurrentUserEmail(currentUser.email);
-      setCurrentUserName(currentUser.name);
-    } else {
-      setCurrentUserEmail(null);
-      setCurrentUserName(null);
+      setBoards(fetchedBoards);
+      setUsers(allUsers);
+      
+      if (currentUser) {
+        setCurrentUserEmail(currentUser.email);
+        setCurrentUserName(currentUser.name);
+      } else {
+        setCurrentUserEmail(null);
+        setCurrentUserName(null);
+      }
+    } catch (error) {
+      console.error("Failed to sync data:", error);
+      alert("Could not load app data. Please check your connection and refresh.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -91,23 +97,33 @@ function App() {
   const handleSaveNewBoard = async (data: { title: string; description: string; options: string[], isPublic: boolean, durationInSeconds: number }) => {
     if (!currentUserEmail) return;
     
-    const newBoard = await db.createBoard({
-      title: data.title,
-      description: data.description,
-      options: data.options,
-      isPublic: data.isPublic,
-      durationInSeconds: data.durationInSeconds,
-    });
+    try {
+      const newBoard = await db.createBoard({
+        title: data.title,
+        description: data.description,
+        options: data.options,
+        isPublic: data.isPublic,
+        durationInSeconds: data.durationInSeconds,
+      });
 
-    setBoards([newBoard, ...boards]);
-    setSelectedBoardId(newBoard.id);
-    setPreviousView('dashboard'); // Always come from dashboard after creation
-    setView('board');
+      setBoards([newBoard, ...boards]);
+      setSelectedBoardId(newBoard.id);
+      setPreviousView('dashboard'); // Always come from dashboard after creation
+      setView('board');
+    } catch (error) {
+      console.error(error);
+      alert("Sorry, we couldn't create your board. Please try again.");
+    }
   };
 
   const handleUpdateBoard = async (updatedBoard: DecisionBoardType) => {
-    const result = await db.updateBoard(updatedBoard);
-    setBoards(boards.map(b => (b.id === result.id ? result : b)));
+    try {
+      const result = await db.updateBoard(updatedBoard);
+      setBoards(boards.map(b => (b.id === result.id ? result : b)));
+    } catch (error) {
+      console.error(error);
+      alert("Sorry, we couldn't save your changes. Please try again.");
+    }
   };
 
   const handleBackToDashboard = () => {
@@ -145,6 +161,7 @@ function App() {
             <Dashboard 
               boards={userBoards}
               onSelectBoard={handleSelectBoard} 
+              onCreateNew={handleCreateNew}
             />
           </Layout>
         );
@@ -192,6 +209,7 @@ function App() {
           <Dashboard 
             boards={userBoards}
             onSelectBoard={handleSelectBoard}
+            onCreateNew={handleCreateNew}
           />
         );
     }

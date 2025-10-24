@@ -5,9 +5,10 @@ import { formatTimeLeft } from '../utils/time';
 interface DashboardProps {
   boards: DecisionBoard[];
   onSelectBoard: (boardId: string) => void;
+  onCreateNew: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ boards, onSelectBoard }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ boards, onSelectBoard, onCreateNew }) => {
   return (
       <div className="space-y-4">
         {boards.length > 0 ? boards.map(board => {
@@ -41,6 +42,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ boards, onSelectBoard }) =
             <div className="text-center py-16 px-6 bg-white rounded-xl border-2 border-dashed border-zinc-200">
                 <h3 className="text-xl font-semibold text-zinc-800">Your Decision Space is Clear!</h3>
                 <p className="mt-2 text-zinc-500">Ready to solve a dilemma? Start a new board to get clarity.</p>
+                <button 
+                  onClick={onCreateNew} 
+                  className="mt-6 bg-zinc-900 text-zinc-50 px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-zinc-800 focus:outline-none focus:ring-0 transition-colors"
+                >
+                  Create Your First Board
+                </button>
             </div>
         )}
       </div>

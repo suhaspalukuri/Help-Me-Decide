@@ -10,6 +10,7 @@ interface OptionCardProps {
   onUpdateContributionVote: (optionId: string, contributionId: string, type: ContributionType, direction: 'up' | 'down') => void;
   hasVoted: boolean;
   isExpired: boolean;
+  isWinner: boolean;
 }
 
 interface ContributionListProps {
@@ -52,25 +53,32 @@ const ContributionList: React.FC<ContributionListProps> = ({ items, type, option
 };
 
 
-export const OptionCard: React.FC<OptionCardProps> = ({ option, onVote, onAddContribution, onUpdateContributionVote, hasVoted, isExpired }) => {
+export const OptionCard: React.FC<OptionCardProps> = ({ option, onVote, onAddContribution, onUpdateContributionVote, hasVoted, isExpired, isWinner }) => {
   const [showProInput, setShowProInput] = useState(false);
   const [showConInput, setShowConInput] = useState(false);
+  const winnerClasses = isWinner ? 'border-emerald-400 border-2 shadow-lg' : 'border-zinc-200';
 
   return (
-    <div className="bg-white rounded-xl p-6 border border-zinc-200 flex flex-col shadow-sm">
+    <div className={`bg-white rounded-xl p-6 flex flex-col shadow-sm transition-all ${winnerClasses}`}>
       <div className="flex justify-between items-start">
         <h3 className="text-xl font-semibold text-zinc-900">{option.name}</h3>
+        {isWinner && (
+          <div className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full -mt-1">Top Choice</div>
+        )}
+      </div>
+
+      <div className="my-4">
         <button
           onClick={() => onVote(option.id)}
           disabled={hasVoted || isExpired}
-          className="disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium bg-white border border-zinc-200 px-4 py-2 rounded-full hover:bg-zinc-100 text-zinc-800 transition-colors"
+          className="w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium bg-white border border-zinc-200 px-4 py-2 rounded-full hover:bg-zinc-100 text-zinc-800 transition-colors"
         >
-          <span>This One!</span>
+          <span>Vote</span>
           <span className="text-lg font-bold text-zinc-900">{option.votes}</span>
         </button>
       </div>
 
-      <div className="mt-4 flex-grow">
+      <div className="mt-2 flex-grow">
         {/* Pros Section */}
         <div>
           <div className="flex justify-between items-center">
