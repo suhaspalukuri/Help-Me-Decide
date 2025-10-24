@@ -23,7 +23,7 @@ export const getCurrentUser = async (): Promise<string | null> => {
 
 export const getUsers = async (): Promise<User[]> => {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('users').select('name, email, securityQuestion, securityAnswer');
+    const { data, error } = await supabase.from('users').select('id, name, email, securityQuestion, securityAnswer');
     if (error) {
         console.error("Error fetching users:", error.message);
         return [];
@@ -77,6 +77,7 @@ export const signupUser = async (userData: User): Promise<{ success: boolean; er
     }
 
     const { error: userError } = await supabase.from('users').insert({
+        id: authData.user.id,
         email: userData.email.toLowerCase(),
         name: userData.name.trim(),
         securityQuestion: userData.securityQuestion,

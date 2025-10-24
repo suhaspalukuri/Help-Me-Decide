@@ -11,7 +11,7 @@ export interface Contribution {
 }
 
 export interface Option {
-  id: string;
+  id:string;
   name: string;
   pros: Contribution[];
   cons: Contribution[];
@@ -30,6 +30,7 @@ export interface DecisionBoard {
 }
 
 export interface User {
+  id?: string; // The user's unique ID from the authentication provider
   email: string;
   name: string;
   password?: string; // Password should be optional on the frontend model
