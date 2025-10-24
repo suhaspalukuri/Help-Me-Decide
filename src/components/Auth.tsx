@@ -373,7 +373,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onSignup }) => {
       <div className="flex items-center justify-center h-full px-4 sm:px-6 lg:px-8">
         <div className="mx-auto grid w-[350px] gap-4">
           <div className="grid gap-1.5">
-            <h1 className="text-3xl font-bold tracking-tight">Help Me Decide</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Squareboard</h1>
             <p className="text-zinc-600">{getTitle()}</p>
           </div>
 
