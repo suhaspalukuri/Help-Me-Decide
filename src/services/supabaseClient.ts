@@ -1,13 +1,8 @@
-// Fix: Manually declare the type for `import.meta.env` to provide type-safety
-// for Vite's environment variables. This avoids issues with TypeScript not
-// being able to locate the `vite/client` type definitions.
-declare global {
-  interface ImportMeta {
-    readonly env: {
-      readonly VITE_SUPABASE_URL: string;
-      readonly VITE_SUPABASE_ANON_KEY: string;
-    };
-  }
+// Fix: Augment Vite's ImportMetaEnv interface to include custom environment variables.
+// This avoids conflicts with the default `ImportMetaEnv` provided by Vite.
+interface ImportMetaEnv {
+  readonly VITE_SUPABASE_URL: string;
+  readonly VITE_SUPABASE_ANON_KEY: string;
 }
 
 import { createClient } from '@supabase/supabase-js';
